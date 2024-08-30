@@ -10,7 +10,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from SocialMediaScraper.facebook import HEADERS
 from SocialMediaScraper.logging_config import LoggerUtil
 
-logger = LoggerUtil().get_logger()
+logger = LoggerUtil().get_new_logger()
 
 
 def get_md5(content):
