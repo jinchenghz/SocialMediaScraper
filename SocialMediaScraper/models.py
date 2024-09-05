@@ -1,19 +1,164 @@
-class BaseItem:
-    pass
-
-
-class YtbUserItem:
+class BaseUserItem:
     user_name = None
     user_id = None
     user_url = None
-    description = None
     avatar = None
+    followers_count = None
+
+
+class InsUserItem(BaseUserItem):
+    screen_name = None
+    post_count = None
+
+
+class PostListBaseItem:
+    post_id = None
+    post_url = None
+    content = None
+    publish_time = None
+
+
+class InsPostListItem(PostListBaseItem):
+    pass
+
+
+class TwUserItem:
+    avatar = None
+    user_name = None
+    favourites_count = None
+    followers_count = None
+    join_time = None
+    friends_count = None
+    location = None
+    user_id = None
+    screen_name = None
+    listed_count = None
+    media_count = None
+    statuses_count = None
+    birthdate = None
+
+
+class InsPostItem:
+    media_id = None
+    text = None
+    publish_time = None
+    like_count = None
+    comment_count = None
+    post_url = None
+    coauthor_producers = None
+    user_id = None
+    user_name = None
+    screen_name = None
+    avatar = None
+    image_list = None
+    video_url = None
+    video_cover_image = None
+    video_duration = None
+
+
+class InsCommentItem:
+    comment_id = None
+    user_id = None
+    user_name = None
+    screen_name = None
+    avatar = None
+    comment_content = None
+    create_time = None
+    like_num = None
+
+
+class InsSearchItem:
+    post_id = None
+    post_url = None
+    content = None
+    publish_time = None
+    user_id = None
+    user_full_name = None
+    user_name = None
+    user_url = None
+    avatar = None
+    image_list = None
+    like_count = None
+    comment_count = None
+    play_count = None
+    video_url = None
+    video_cover_image = None
+    duration = None
+
+
+class FbUserItem(BaseUserItem):
+    friends_count = None
+    likes_count = None
+    following_count = None
+    location = None
+    gender = None
+    birthday = None
+
+
+class FbPostListItem:
+    post_id = None
+    content = None
+    publish_time = None
+    post_url = None
+
+
+class FbPostItem:
+    user_id = None
+    user_url = None
+    user_name = None
+    avatar = None
+    post_url = None
+    action_id = None
+    view_count = None
+    react_count = None
+    comment_count = None
+    share_count = None
+    content = None
+    create_time = None
+    post_id = None
+    image_list = None
+    video_url = None
+    video_cover_image = None
+    video_duration = None
+
+
+class FbCommentItem:
+    comment_id = None
+    gender = None
+    user_id = None
+    user_name = None
+    user_url = None
+    avatar = None
+    content = None
+    likes_count = None
+    create_time = None
+
+
+class FbSearchItem:
+    post_id = None
+    action_id = None
+    user_name = None
+    user_id = None
+    user_url = None
+    avatar = None
+    create_time = None
+    post_url = None
+    like_count = None
+    share_count = None
+    comment_count = None
+    image_list = None
+    video_list = None
+    video_cover_image = None
+    duration = None
+
+
+class YtbUserItem(BaseUserItem):
+    description = None
     video_count = None
     view_count = None
-    follower_count = None
 
 
-class YtbPostListItem(BaseItem):
+class YtbPostListItem:
     post_id = None
     post_url = None
     title = None
@@ -38,7 +183,7 @@ class YtbVideoItem:
     comment_count = None
 
 
-class YtbCommentItem(BaseItem):
+class YtbCommentItem:
     comment_id = None
     comment_content = None
     comment_time = None
@@ -50,7 +195,7 @@ class YtbCommentItem(BaseItem):
     comment_user_avatar = None
 
 
-class YtbPostSearchItem(BaseItem):
+class YtbPostSearchItem:
     content = None
     create_time = None
     duration = None

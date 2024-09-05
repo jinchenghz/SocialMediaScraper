@@ -2,6 +2,7 @@ import json
 
 from SocialMediaScraper.instagram import HEADERS
 from SocialMediaScraper.instagram.utils import get_X_IG_App_ID
+from SocialMediaScraper.models import InsUserItem
 from SocialMediaScraper.utils import requests_with_retry
 
 
@@ -22,13 +23,13 @@ def get_user_data(user_name, cookies, proxies=None):
     if status != 'ok':
         raise Exception(parsed_data['message'])
     else:
-        user_info = dict()
+        user_info = InsUserItem()
         user = parsed_data['data']['user']
-        user_info['pic'] = user['profile_pic_url']
-        user_info['user_url'] = f'https://www.instagram.com/{user_name}/'
-        user_info['user_name'] = user['username']
-        user_info['screen_name'] = user['full_name'] if user['full_name'] else user['username']
-        user_info['user_id'] = user['id']
-        user_info['followers'] = str(user['edge_followed_by']['count'])
-        user_info['post_count'] = str(user['edge_owner_to_timeline_media']['count'])
+        user_info.avatar = user['profile_pic_url']
+        user_info.user_url = f'https://www.instagram.com/{user_name}/'
+        user_info.user_name = user['username']
+        user_info.screen_name = user['full_name'] if user['full_name'] else user['username']
+        user_info.user_id = user['id']
+        user_info.followers_count = str(user['edge_followed_by']['count'])
+        user_info.post_count = str(user['edge_owner_to_timeline_media']['count'])
         return user_info

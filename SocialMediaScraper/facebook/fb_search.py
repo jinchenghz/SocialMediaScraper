@@ -88,7 +88,7 @@ class FBSearch:
             item['user_name'] = actor['name']
             item['user_id'] = actor['id']
             item['user_url'] = actor['url']
-            item['user_avatar'] = actor['profile_picture']['uri']
+            item['avatar'] = actor['profile_picture']['uri']
             metadata = comet_sections['context_layout']['story']['comet_sections']['metadata']
             for meta in metadata:
                 if meta.get("story", {}).get("creation_time") and meta.get("story", {}).get("creation_time"):
@@ -113,6 +113,8 @@ class FBSearch:
             # 爬取图片以及视频
             item['image_list'] = []
             item['video_list'] = []
+            item['video_cover_image'] = []
+            item['duration'] = []
             if story['attachments']:
                 attachment = story['attachments'][0]['styles']['attachment']
                 if attachment.get("all_subattachments"):
@@ -133,6 +135,9 @@ class FBSearch:
                             if not video_url:
                                 video_url = node['media']['browser_native_sd_url']
                             item['video_list'].append(video_url)
+                            item['video_cover_image'].append(node['media']['preferred_thumbnail']['image']['uri'])
+                            item['duration'].append(int(node['media']['playable_duration_in_ms']/1000))
+
                 else:
                     if not attachment.get('media'):
                         continue
@@ -147,6 +152,10 @@ class FBSearch:
                         if not video_url:
                             video_url = attachment['media']['browser_native_sd_url']
                         item['video_list'].append(video_url)
+
+                        item['video_cover_image'].append(attachment['media']['preferred_thumbnail']['image']['uri'])
+                        item['duration'].append(int(attachment['media']['playable_duration_in_ms'] / 1000))
+
             self.post_list.append(item)
 
         page_info = data['data']['serpResponse']['results']['page_info']

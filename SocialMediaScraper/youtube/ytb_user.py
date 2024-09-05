@@ -34,14 +34,14 @@ class YtbUser:
         user_data = self.get_user_data(token)
         item.video_count = int(re.findall("([^ ]*?) videos", user_data['videoCountText'])[0].replace(',', ''))
         item.view_count = int(re.findall("([^ ]*?) views", user_data['viewCountText'])[0].replace(',', ''))
-        item.follower_count = re.findall("([^ ]*?) subscribers", user_data['subscriberCountText'])[0].replace(',',
+        item.followers_count = re.findall("([^ ]*?) subscribers", user_data['subscriberCountText'])[0].replace(',',
                                                                                                               '')
-        if 'K' in item.follower_count:
-            item.follower_count = int(float(item.follower_count.replace('K', '')) * 1000)
-        elif 'M' in item.follower_count:
-            item.follower_count = int(float(item.follower_count.replace('M', '')) * 1000000)
-        elif 'B' in item.follower_count:
-            item.follower_count = int(float(item.follower_count.replace('B', '')) * 1000000000)
+        if 'K' in item.followers_count:
+            item.followers_count = int(float(item.followers_count.replace('K', '')) * 1000)
+        elif 'M' in item.followers_count:
+            item.followers_count = int(float(item.followers_count.replace('M', '')) * 1000000)
+        elif 'B' in item.followers_count:
+            item.followers_count = int(float(item.followers_count.replace('B', '')) * 1000000000)
         # except:
         #     item['video_count'] = re.findall('"content":"([^ ]*?) videos"', response)[0]
         #     item['view_count'] = None

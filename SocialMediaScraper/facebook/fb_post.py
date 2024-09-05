@@ -2,6 +2,7 @@ import json
 import re
 import requests
 from SocialMediaScraper.facebook import HEADERS
+from SocialMediaScraper.models import FbPostItem, FbCommentItem
 from SocialMediaScraper.utils import requests_with_retry, get_fb_dtsg
 
 
@@ -22,7 +23,7 @@ class FbPost:
                                                proxies=self.proxies).text
         if 'for (;;)' in response:
             raise Exception('cookie登录失效')
-        item = dict()
+        item = FbPostItem()
         user_profile = re.findall(
             '"__typename":"User","__isActor":"User","id":"([^"]*?)","__isEntity":"User","url":"([^"]*?)".*?"name":"(['
             '^"]*?)","profile_picture":\{"uri":"([^"]*?)"',
@@ -43,99 +44,96 @@ class FbPost:
             for user in user_profile:
                 if user[2] in _user_name and _user_name:
                     _count += 1
-                    item['user_id'] = user[0]
-                    item['user_url'] = user[1].replace('\\', '')
-                    item['username'] = user[2]
-                    item['user_avatar'] = user[3].replace('\\', '')
-                    if item['user_id'].startswith("pfb"):
+                    item.user_id = user[0]
+                    item.user_url = user[1].replace('\\', '')
+                    item.user_name = user[2]
+                    item.avatar = user[3].replace('\\', '')
+                    if item.user_id.startswith("pfb"):
                         try:
-                            item['user_id'] = re.findall('"content_owner_id_new[^"]*?":[^"]*?"(\d+)', response)[0]
+                            item.user_id = re.findall('"content_owner_id_new[^"]*?":[^"]*?"(\d+)', response)[0]
                         except:
-                            item['user_id'] = re.findall('"owning_profile_id":\s*"(\d+)', response)[0]
+                            item.user_id = re.findall('"owning_profile_id":\s*"(\d+)', response)[0]
             if _count == 0:
                 for user in user_profile:
                     if (user[0] == _user_id and _user_id) or user[0].startswith("pfb"):
                         _count += 1
-                        item['user_id'] = user[0]
-                        item['user_url'] = user[1].replace('\\', '')
-                        item['username'] = user[2]
-                        item['user_avatar'] = user[3].replace('\\', '')
-                        if item['user_id'].startswith("pfb"):
+                        item.user_id = user[0]
+                        item.user_url = user[1].replace('\\', '')
+                        item.user_name = user[2]
+                        item.avatar = user[3].replace('\\', '')
+                        if item.user_id.startswith("pfb"):
                             try:
-                                item['user_id'] = re.findall('"content_owner_id_new[^"]*?":[^"]*?"(\d+)', response)[0]
+                                item.user_id = re.findall('"content_owner_id_new[^"]*?":[^"]*?"(\d+)', response)[0]
                             except:
-                                item['user_id'] = re.findall('"owning_profile_id":\s*"(\d+)', response)[0]
+                                item.user_id = re.findall('"owning_profile_id":\s*"(\d+)', response)[0]
             if _count == 0:
                 user = user_profile[0]
-                item['user_id'] = user[0]
-                item['user_url'] = user[1].replace('\\', '')
-                item['username'] = user[2]
-                item['user_avatar'] = user[3].replace('\\', '')
-                if item['user_id'].startswith("pfb"):
+                item.user_id = user[0]
+                item.user_url = user[1].replace('\\', '')
+                item.user_name = user[2]
+                item.avatar = user[3].replace('\\', '')
+                if item.user_id.startswith("pfb"):
                     try:
-                        item['user_id'] = re.findall('"content_owner_id_new[^"]*?":[^"]*?"(\d+)', response)[0]
+                        item.user_id = re.findall('"content_owner_id_new[^"]*?":[^"]*?"(\d+)', response)[0]
                     except:
-                        item['user_id'] = re.findall('"owning_profile_id":\s*"(\d+)', response)[0]
+                        item.user_id = re.findall('"owning_profile_id":\s*"(\d+)', response)[0]
 
-        if item.get('user_url') == "null":
-            item['user_url'] = f"https://www.facebook.com/profile.php?id={item['user_id']}"
+        if item.user_url == "null":
+            item.user_url = f"https://www.facebook.com/profile.php?id={item.user_id}"
 
-        item['post_url'] = post_url
+        item.post_url = post_url
 
         parent_feedback = re.findall('"parent_feedback":\s*\{\s*"id":\s*"([^"]*?)",', response)
-        item['action_id'] = parent_feedback[0] if parent_feedback else None
+        item.action_id = parent_feedback[0] if parent_feedback else None
 
         view_count = re.findall('"video_view_count":\s*(\d+)', response)
-        item['view_count'] = int(view_count[0]) if view_count else None
+        item.view_count = int(view_count[0]) if view_count else None
 
-        if item['action_id'] is None and item['view_count'] is not None:
+        if item.action_id is None and item.view_count is not None:
             # 视频帖子
-            item['action_id'] = \
+            item.action_id = \
                 re.findall('"id":\s*"([^"]*?)",\s*"is_eligible_for_enhanced_comment_updates"', response)[0]
             # print(f'"play_count":\s*(\d+)\s*,\s*"id":\s*"{item["action_id"]}"')
-            view_count = re.findall(f'"play_count":\s*(\d+)\s*,\s*"id":\s*"{item["action_id"]}"', response)
-            item['view_count'] = int(view_count[0]) if view_count else None
-            react_count = re.findall('"id":\s*"%s".*?"reaction_count":\s*\{\s*"count":\s*([^,]*?),' % item['action_id'],
+            view_count = re.findall(f'"play_count":\s*(\d+)\s*,\s*"id":\s*"{item.action_id}"', response)
+            item.view_count = int(view_count[0]) if view_count else None
+            react_count = re.findall('"id":\s*"%s".*?"reaction_count":\s*\{\s*"count":\s*([^,]*?),' % item.action_id,
                                      response)
-            item['react_count'] = int(react_count[0]) if react_count else None
-            comment_count = re.findall('"id":\s*"%s".*?"comments":\s*\{\s*"total_count":\s*(\d+)' % item['action_id'],
+            item.react_count = int(react_count[0]) if react_count else None
+            comment_count = re.findall('"id":\s*"%s".*?"comments":\s*\{\s*"total_count":\s*(\d+)' % item.action_id,
                                        response)
-            item['comment_count'] = int(comment_count[0]) if comment_count else None
-            share_count = re.findall('"id":\s*"%s".*?"share_count":\s*\{\s*"count":\s*([^,]*?),' % item['action_id'],
+            item.comment_count = int(comment_count[0]) if comment_count else None
+            share_count = re.findall('"id":\s*"%s".*?"share_count":\s*\{\s*"count":\s*([^,]*?),' % item.action_id,
                                      response)
-            item['share_count'] = int(share_count[0]) if share_count else None
+            item.share_count = int(share_count[0]) if share_count else None
 
             # 视频页内容
             content = re.findall('"creation_story":.*?"message":\s*\{\s*"text":\s*"(.*?)",', response)
-            item['content'] = content[0] if content else None
+            item.content = content[0] if content else None
         else:
             # 非视频帖子
             react_count = re.findall('"reaction_count":\s*\{\s*"count":\s*([^,]*?),', response)
-            item['react_count'] = int(react_count[0]) if react_count else None
+            item.react_count = int(react_count[0]) if react_count else None
             comment_count = re.findall('"comments":\s*\{\s*"total_count":\s*(\d+)', response)
-            item['comment_count'] = int(comment_count[0]) if comment_count else None
+            item.comment_count = int(comment_count[0]) if comment_count else None
             share_count = re.findall('"share_count":\s*\{\s*"count":\s*([^,]*?),', response)
-            item['share_count'] = int(share_count[0]) if share_count else None
+            item.share_count = int(share_count[0]) if share_count else None
             view_count = re.findall('"video_view_count":\s*(\d+)', response)
-            item['view_count'] = int(view_count[0]) if view_count else None
+            item.view_count = int(view_count[0]) if view_count else None
 
             content = re.findall('"footer_body":\s*"([^"]*?)"', response)
             if not content:
                 content = re.findall('"message":\s*{\s*"__typename":\s*"TextWithEntities",\s*"text":\s*"(.*?)"},',
                                      response)
-            item['content'] = content[0] if content else None
+            item.content = content[0] if content else None
 
         create_time = re.findall('"metadata":\s*\[[^]]*?"creation_time":\s*(\d+),', response)
-        item['create_time'] = int(create_time[0]) * 1000 if create_time else None
-        if item['create_time'] is None:
+        item.create_time = int(create_time[0]) * 1000 if create_time else None
+        if item.create_time is None:
             raise Exception('获取帖子发布时间失败，可能帖子链接失效导致')
         try:
-            if '/posts/' in post_url:
-                item['post_id'] = re.findall('/posts/(\w+)', post_url)[0]
-            else:
-                item['post_id'] = re.findall('story_fbid=(\w+)', post_url)[0]
+            item.post_id = re.findall('"post_id":"([^"]+?)"', response)[0]
         except:
-            item['post_id'] = re.findall('(\w+)', post_url)[-1]
+            raise Exception("获取帖子id错误")
         # 获取图片
         media_str = re.findall(
             '"attachment":\s*{\s*"mediaset_token":\s*"([^"]*?)",\s*"url":\s*"[^"]*?",\s*"all_subattachments":\s*\{\s*"count":\s*(\d+),\s*"nodes":\s*(\[[^]]*?\])',
@@ -152,18 +150,36 @@ class FbPost:
         if not self.image_list:
             self.image_list = [i.replace('\\', '') for i in
                                re.findall('"photo_image":\s*{\s*"uri":\s*"([^"]*?)"', response)]
-        item['image_list'] = self.image_list if self.image_list else None
+        item.image_list = self.image_list if self.image_list else None
 
         # 获取视频
         video_str = re.findall('"browser_native_hd_url":\s*"([^"]*?)"', response)
-        item['video_url'] = video_str[0].replace('\\u0025', '%').replace('\\', "") if video_str else None
-        # 获取视频封面
-        video_cover_image = re.findall(
-            '"__typename":\s*"Video",\s*"preferred_thumbnail":\s*{\s*"image":\s*{\s*"uri":\s*"([^"]*?)"\s*}',
-            response)
-        item['video_cover_image'] = video_cover_image[0].replace('\\u0025', '%').replace('\\',
-                                                                                         "") if video_cover_image else None
-        return item
+        if not video_str:
+            video_str = re.findall('"browser_native_sd_url":\s*"([^"]*?)"', response)
+        item.video_url = video_str[0].replace('\\u0025', '%').replace('\\', "") if video_str else None
+        if item.video_url:
+            # 获取视频封面
+            video_cover_image = re.findall(
+                '"__typename":\s*"Video",\s*"preferred_thumbnail":\s*{\s*"image":\s*{\s*"uri":\s*"([^"]*?)"\s*}',
+                response)
+            item.video_cover_image = video_cover_image[0].replace(
+                '\\u0025', '%').replace('\\', "") if video_cover_image else None
+
+            # 获取视频时长
+            video_duration_str = re.findall('"playable_duration_in_ms":\s*(\d+),', response)
+            item.video_duration = int(int(video_duration_str[0]) / 1000) if video_duration_str else None
+        else:
+            item.video_cover_image = None
+            item.video_duration = None
+        # pprint(item)
+        live_duration_str = re.findall('"broadcast_duration":\s*(\d+),', response)
+        if live_duration_str:
+            # 处理live
+            item.content = re.findall('<title>([^<]*?) \|[^<]*?</title>', response)[0]
+            video_duration_str = live_duration_str[0]
+            item.video_duration = int(video_duration_str) if video_duration_str else None
+            item.video_url = None
+        return item.__dict__
 
     def get_more_image(self, node_id, mediasetToken, count=6):
         variables = {"isMediaset": True, "renderLocation": "permalink", "nodeID": node_id,
@@ -270,18 +286,17 @@ class FbPost:
                 edges.extend(data['edges'])
                 page_info = data['page_info']
         for edge in edges:
-            self.comment_list.append({
-                'comment_id': edge['node'].get('legacy_fbid'),
-                'gender': edge['node']['author']['gender'],
-                'user_id': edge['node']['author']['id'],
-                'username': edge['node']['author']['name'],
-                'user_url': edge['node']['author']['url'],
-                'avatar': edge['node']['author']['profile_picture_depth_0']['uri'],
-                'content': edge['node']['body'] if not edge['node']['body'] else edge['node']['body']['text'],
-                'like': edge['node']['feedback']['reactors']['count'],
-                'create_time': int(edge['node']['created_time']) * 1000
-            })
+            item = FbCommentItem()
+            item.comment_id = edge['node'].get('legacy_fbid')
+            item.gender = edge['node']['author']['gender']
+            item.user_id = edge['node']['author']['id']
+            item.user_name = edge['node']['author']['name']
+            item.user_url = edge['node']['author']['url']
+            item.avatar = edge['node']['author']['profile_picture_depth_0']['uri']
+            item.content = edge['node']['body'] if not edge['node']['body'] else edge['node']['body']['text']
+            item.likes_count = edge['node']['feedback']['reactors']['count']
+            item.create_time = int(edge['node']['created_time']) * 1000
+            self.comment_list.append(item.__dict__)
         if len(self.comment_list) < comment_num and page_info['has_next_page']:
             self.fb_comment(action_id, comment_num, page_info['end_cursor'])
         return self.comment_list
-

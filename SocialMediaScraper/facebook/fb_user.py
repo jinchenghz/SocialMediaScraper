@@ -1,6 +1,7 @@
 import json
 import re
 from SocialMediaScraper.facebook import HEADERS
+from SocialMediaScraper.models import FbUserItem
 from SocialMediaScraper.utils import requests_with_retry
 
 
@@ -37,26 +38,26 @@ class FBUser:
             url = f'https://www.facebook.com/{userId}'
         if "This content isn't available right now" in response:
             raise Exception('当前页面信息错误')
-        item = dict()
-        item['user_url'] = url
+        item = FbUserItem()
+        item.user_url = url
         user_id = re.findall('"userID":\s*"(\d+)"', response)
-        item['user_id'] = user_id[0] if user_id else None
+        item.user_id = user_id[0] if user_id else None
         name = re.findall("<title>([^<]*?)</title>", response)
-        item['name'] = name[0] if name else None
+        item.user_name = name[0] if name else None
         friends = re.findall('"text":\s*"(\d[^"]*?)\sfriends"', response)
-        item['friends'] = friends[0] if friends else None
+        item.friends_count = friends[0] if friends else None
         followers = re.findall('"text":\s*"(\d[^"]*?)\sfollowers"', response)
-        item['followers'] = followers[0] if followers else None
+        item.followers_count = followers[0] if followers else None
         likes = re.findall('"text":\s*"(\d[^"]*?)\slikes"', response)
-        item['likes'] = likes[0] if likes else None
+        item.likes_count = likes[0] if likes else None
         following = re.findall('"text":\s*"(\d[^"]*?)\sfollowing"', response)
-        item['following'] = following[0] if following else None
+        item.following_count = following[0] if following else None
         location = re.findall('"text":\s*"Lives in ([^"]*?)"', location_response)
-        item['location'] = location[0] if location else None
+        item.location = location[0] if location else None
         profile_pic = re.findall('"profilePicLarge":\s*\{\s*"uri":\s*"([^"]*?)"', response)
-        item['avatar'] = profile_pic[0].replace("\\", "") if profile_pic else None
+        item.avatar = profile_pic[0].replace("\\", "") if profile_pic else None
         gender = re.findall('"gender":\s*"([^"]*?)"', response)
-        item['gender'] = gender[0] if gender else None
+        item.gender = gender[0] if gender else None
         birth_year = None
         birth_date = None
         if 'Birth year' in response:
@@ -64,9 +65,9 @@ class FBUser:
         if 'Birth date' in response:
             birth_date = re.findall('dir="auto">([^\s]*?\s\d+)<', response)
         if birth_year and birth_date:
-            item['birthday'] = birth_date[0] + ' ,' + birth_year[0]
+            item.birthday = birth_date[0] + ' ,' + birth_year[0]
         elif birth_year:
-            item['birthday'] = birth_year[0]
+            item.birthday = birth_year[0]
         else:
-            item['birthday'] = None
-        return item
+            item.birthday = None
+        return item.__dict__

@@ -1,5 +1,5 @@
 from SocialMediaScraper.facebook.fb_post import FbPost
-from SocialMediaScraper.facebook.fb_post_list import FbPostList
+from SocialMediaScraper.facebook.fb_post_list_v2 import FbPostList
 from SocialMediaScraper.facebook.fb_search import FBSearch
 from SocialMediaScraper.facebook.fb_user import FBUser
 
@@ -24,7 +24,7 @@ def post_list(user_id, cookies, post_num, proxies=None):
     :param proxies: 代理信息
     :return:
     """
-    return FbPostList(cookies, proxies=proxies).get_post_list(user_id, post_num)
+    return FbPostList(cookies, post_num, proxies=proxies).get_post_list(user_id)
 
 
 def post_detail(post_url, cookies, proxies=None):

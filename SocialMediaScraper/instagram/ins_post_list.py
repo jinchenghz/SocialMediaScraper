@@ -1,6 +1,7 @@
 import json
 from SocialMediaScraper.instagram import HEADERS
 from SocialMediaScraper.instagram.utils import get_X_IG_App_ID
+from SocialMediaScraper.models import InsPostListItem
 from SocialMediaScraper.utils import requests_with_retry
 
 
@@ -28,12 +29,18 @@ class InsPostList:
         status = parse_data['status']
         if status != 'ok':
             raise Exception(parse_data['message'])
-        else:
-            self.post_list.extend([item['code'] for item in parse_data['items']])
+        for post in parse_data['items']:
+            item = InsPostListItem()
+            item.post_id = post['code']
+            item.publish_time = post['taken_at']
+            item.content = post['caption']['text']
+            item.post_url = f"https://www.instagram.com/p/{post['code']}/"
+            self.post_list.extend(item.__dict__)
+
             more_available = parse_data.get('more_available')
 
             if more_available:
                 next_max_id = parse_data['next_max_id']
                 while more_available and len(self.post_list) < post_num:
                     self.get_post_list(user_name, post_num, next_max_id)
-            return [f"https://www.instagram.com/p/{_id}/" for _id in self.post_list[:post_num]]
+        return self.post_list

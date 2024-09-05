@@ -2,6 +2,7 @@ import json
 import re
 from SocialMediaScraper.instagram import HEADERS
 from SocialMediaScraper.instagram.utils import get_fb_dtsg, get_X_IG_App_ID
+from SocialMediaScraper.models import InsPostItem, InsCommentItem
 from SocialMediaScraper.utils import requests_with_retry
 
 
@@ -17,7 +18,7 @@ class InsPost:
     def ins_post_detail(self, post_id):
         if post_id.startswith('https://www.instagram.com/p/'):
             post_id = re.findall('/p/([^/]+)?', post_id)[0]
-        post_info = dict()
+        post_info = InsPostItem()
         fb_dtsg = get_fb_dtsg(code=post_id, cookie=self.cookies)
         if fb_dtsg == '':
             raise Exception("账号异常")
@@ -68,41 +69,41 @@ class InsPost:
         except:
             create_time = post_info_data['taken_at']
 
-        post_info['media_id'] = post_info_data['pk']
-        post_info['text'] = text
-        post_info['create_time'] = create_time
-        post_info['like_count'] = post_info_data['like_count']
-        post_info['comment_count'] = post_info_data['comment_count']
-        post_info['url'] = f'https://www.instagram.com/p/{post_info_data["code"]}'
+        post_info.media_id = post_info_data['pk']
+        post_info.content = text
+        post_info.publish_time = create_time
+        post_info.like_count = post_info_data['like_count']
+        post_info.comment_count = post_info_data['comment_count']
+        post_info.post_url = f'https://www.instagram.com/p/{post_info_data["code"]}'
 
         if post_info_data.get('coauthor_producers') and isinstance(post_info_data.get('coauthor_producers'), list):
-            post_info['coauthor_producers'] = []
+            post_info.coauthor_producers = []
             for i in post_info_data.get('coauthor_producers'):
                 coauthor_producers = dict()
                 coauthor_producers['user_id'] = i["id"]  # 数字型
                 coauthor_producers['user_name'] = i["username"]
                 coauthor_producers['screen_name'] = i["full_name"] if i.get("full_name") else i["username"]
                 coauthor_producers['avatar'] = i["profile_pic_url"]
-                post_info['coauthor_producers'].append(coauthor_producers)
-            if not post_info['coauthor_producers']:
+                post_info.coauthor_producers.append(coauthor_producers)
+            if not post_info.coauthor_producers:
                 user_name = post_info_data['user']['username']
                 user_id = post_info_data['user']['id']
                 pic = post_info_data['user']['profile_pic_url']
-                post_info['user_id'] = user_id
-                post_info['user_name'] = user_name
-                post_info['screen_name'] = post_info_data['user']['full_name'] if post_info_data['user'].get(
+                post_info.user_id = user_id
+                post_info.user_name = user_name
+                post_info.screen_name = post_info_data['user']['full_name'] if post_info_data['user'].get(
                     'full_name') else user_name
-                post_info['avatar'] = pic
+                post_info.avatar = pic
 
         else:
             user_name = post_info_data['user']['username']
             user_id = post_info_data['user']['id']
             pic = post_info_data['user']['profile_pic_url']
-            post_info['user_id'] = user_id
-            post_info['user_name'] = user_name
-            post_info['screen_name'] = post_info_data['user']['full_name'] if post_info_data['user'].get(
+            post_info.user_id = user_id
+            post_info.user_name = user_name
+            post_info.screen_name = post_info_data['user']['full_name'] if post_info_data['user'].get(
                 'full_name') else user_name
-            post_info['avatar'] = pic
+            post_info.avatar = pic
 
         # 获取视频以及图片
         carousel_media = post_info_data.get('carousel_media')
@@ -117,21 +118,30 @@ class InsPost:
                 if not video_str:
                     image_list.append(m['image_versions2']['candidates'][0]['url'].replace('\\', ""))
 
-        post_info['image_list'] = image_list if image_list else None
+        post_info.image_list = image_list if image_list else None
         if not video_str:
             video_str = post_info_data.get('video_dash_manifest')
         video_str = video_str if video_str else ''
         video_data = [i.replace('&amp;', '&').replace('\\u0025', '%').replace('\\', "") for i in
                       re.findall('<BaseURL>([^<]*?)\u003C', video_str)]
-        post_info['video_url'] = video_data[0] if video_data else None
-        if post_info['video_url']:
+        post_info.video_url = video_data[0] if video_data else None
+
+        if post_info.video_url:
             video_cover_image = post_info_data.get("image_versions2", {}).get("candidates", [])
             if video_cover_image:
                 video_cover_image = video_cover_image[0].get("url").replace('\\u0025', '%').replace('\\', "")
-            post_info['video_cover_image'] = video_cover_image if video_cover_image else None
+            post_info.video_cover_image = video_cover_image if video_cover_image else None
+
+            # 获取视频时长
+            video_duration_str = re.findall('duration="PT(\d+.\d+)S"',
+                                            post_info_data.get('video_dash_manifest', ''))
+            post_info.video_duration = int(float(video_duration_str[0])) if video_duration_str else None
+
         else:
-            post_info['video_cover_image'] = None
-        return post_info
+            post_info.video_cover_image = None
+            post_info.video_duration = None
+
+        return post_info.__dict__
 
     def get_comments(self, post_id, comment_num, next_min_id=None):
         if not self.media_id:
@@ -147,9 +157,10 @@ class InsPost:
                 'can_support_threading': 'true',
                 'permalink_enabled': 'false',
             }
-        print('self.media_id',self.media_id)
+        print('self.media_id', self.media_id)
         response = requests_with_retry.get(f'https://www.instagram.com/api/v1/media/{self.media_id}/comments/',
-                                           params=params, cookies=self.cookies, headers=self.headers, proxies=self.proxies)
+                                           params=params, cookies=self.cookies, headers=self.headers,
+                                           proxies=self.proxies)
 
         try:
             parse_data = json.loads(response.text)
@@ -162,16 +173,16 @@ class InsPost:
         else:
             comments = parse_data['comments']
             for comment in comments:
-                comment_info = dict()
-                comment_info['comment_id'] = comment.get('pk')
-                comment_info['user_id'] = comment['user']['id']
-                comment_info['user_name'] = comment['user']['username']
-                comment_info['screen_name'] = comment['user']['full_name'] if comment['user']['full_name'] else \
-                    comment_info['user_name']
-                comment_info['avatar'] = comment['user']['profile_pic_url']
-                comment_info['comment_content'] = comment['text']
-                comment_info['create_time'] = comment['created_at']
-                comment_info['like_num'] = comment['comment_like_count']
+                comment_info = InsCommentItem()
+                comment_info.comment_id = comment.get('pk')
+                comment_info.user_id = comment['user']['id']
+                comment_info.user_name = comment['user']['username']
+                comment_info.screen_name = comment['user']['full_name'] if comment['user']['full_name'] else \
+                    comment_info.user_name
+                comment_info.avatar = comment['user']['profile_pic_url']
+                comment_info.comment_content = comment['text']
+                comment_info.create_time = comment['created_at']
+                comment_info.like_num = comment['comment_like_count']
                 self.comment_list.append(comment_info)
 
             has_more_headload_comments = parse_data['has_more_headload_comments']
