@@ -1,7 +1,4 @@
 import re
-
-from SocialMediaScraper.facebook.fb_post import FbPost
-from SocialMediaScraper.facebook.fb_search import FBSearch
 from SocialMediaScraper.youtube.ytb_comment import YtbComment
 from SocialMediaScraper.youtube.ytb_post import YtbPost
 from SocialMediaScraper.youtube.ytb_post_list import YtbPostList
