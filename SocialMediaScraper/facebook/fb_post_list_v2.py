@@ -89,6 +89,9 @@ class FbPostList:
                     item.content = comet_sections['content']['story']['comet_sections']['message'][
                         'story']['message']['text']
                     item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
+                    item.reaction_count = int(parse("$..i18n_reaction_count").find(comet_sections)[0].value)
+                    item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
+                    item.share_count = int(parse("$..i18n_share_count").find(comet_sections)[0].value)
                     story_list = parse("$..story").find(comet_sections)
                     for story in story_list:
                         story_data = story.value
@@ -176,11 +179,20 @@ class FbPostList:
             except:
                 item.content = None
             item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
+            # 可能出现 1.3K
+            item.reaction_count = parse("$..i18n_reaction_count").find(comet_sections)[0].value
+            item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
+            # 可能出现 1.3K
+            item.share_count = parse("$..i18n_share_count").find(comet_sections)[0].value
             story_list = parse("$..story").find(comet_sections)
             for story in story_list:
                 story_data = story.value
                 if story_data.get("creation_time"):
                     item.post_url = story_data.get("url")
+            if not item.post_url:
+                print('post_url获取失败')
+                continue
+
             self.post_list.append(item.__dict__)
             print(item.__dict__)
             if edge.get("cursor"):
@@ -189,3 +201,22 @@ class FbPostList:
         if cursor and len(self.post_list) < self.post_num:
             self.get_next_post(user_id, cursor=cursor)
 
+
+# if __name__ == '__main__':
+#     cookies = {
+#         'sb': '67idZngRJP3RYQKjgf1ueaZe',
+#         'ps_n': '1',
+#         'ps_l': '1',
+#         'm_ls': '%7B%22100065413398194%22%3A%7B%22c%22%3A%7B%221%22%3A%22HCwAABZiFtSW8-gBEwUW5PrbtsnALQA%22%2C%222%22%3A%22GRwVQBxMAAAWARbY7O3pDBYAFtjs7ekMABYoAA%22%2C%2295%22%3A%22HCwAABYCFsiB6JUKEwUW5PrbtsnALQA%22%7D%2C%22d%22%3A%22c9cbfca9-06be-4808-9475-70285c72ff85%22%2C%22s%22%3A%220%22%2C%22u%22%3A%22aqambi%22%7D%7D',
+#         'c_user': '100078262803417',
+#         'datr': 'W-jPZistuI43-g6u3PoY_ncR',
+#         'dpr': '1.2000000476837158',
+#         'fr': '1ThWqbjclYHg3bpVO.AWU22-qFrVBRA_cgM0MIOK5XC4U.Bm2bJY..AAA.0.0.Bm2bJY.AWVbVK7u1eA',
+#         'xs': '12%3AZI_MkoAQf05w9g%3A2%3A1724901465%3A-1%3A14036%3A%3AAcUUMRExuSGRMld2ln6bA21nxCW_5AAcyc_LJ9T9X6A',
+#         'presence': 'C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1725543045394%2C%22v%22%3A1%7D',
+#         'wd': '2134x202',
+#     }
+#
+#     fb_post_list = FbPostList(cookies=cookies, post_num=10000)
+#     # fb_post_list.get_post_list('https://www.facebook.com/michelbarnier')
+#     fb_post_list.get_next_post('100046801763578','AQHRD9-suv-zddQQpW4yIlwdftxWKlF1NjD5ATwtWTU59VEjRA7DIO1LWvQJWSs_S0ZRy0HjnxqEq99cFslGCAZ9DzXOaYqeP6kMhsZbJtExSPjvP8GMr_63qmZZkIhIx883fcVL_rRojVHfJWl_eZxbCSqCXHkDowxBtJQfbu12m87Go-OjWdES8mIYGp_zP-FYiaMBrEOgzeVxitnCY-UuXR-4a98h6L9Vn1aOgOvFEGrsdRPlI2YNIxMm_aMXHodeQyJUKbP7vI3108hgrCK-pdTTB6mNE7krskwzHjZdGGRnvCkmxVCfCNtcRuXZLlu8dIbjA17rPYI4tgZGUxwD7acWBytoaMN739mW4u3FhA-g0EF9ZM5Up_cKB4_VtWadgi-x_8OB5VT-d4Gb7xkb60TniNeVlol6y5UhmegseGvfL47uAbLw7OhK4_AU60hDP5joqwHAn013ap8nQAsYd46SvHCJ1mH4dbdgKNIW4BACn0cctNZuuUK2jnAqWaDe2kA5ZcMCkZDPt_95v0yJqQMNqz8n51srHdURJQcidH2mIGt3v4Q1ljEGxHhCitgVRn6iMikgI7t_IcgTaOq_EvTrHqnwpmXvVybaTHV9iVPuR5U6syqFM0MhFjaW7LuHn_h0A5qnsx_Q2Mwr3l9-IhGqUlF1AH50zDiASnJHX8c8DGt70DdixBDZ0hybqfCca-PNr7DNr96L3U5meoifCWmJkwDQfe5qcBdrknpWON8')

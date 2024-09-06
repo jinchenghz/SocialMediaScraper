@@ -1,6 +1,6 @@
-from SocialMediaScraper.twitter.tw_comment import TWComment
+from SocialMediaScraper.twitter.tw_comment import TwComment
 from SocialMediaScraper.twitter.tw_post import TwPost
-from SocialMediaScraper.twitter.tw_post_list import TWPostList
+from SocialMediaScraper.twitter.tw_post_list import TwPostList
 from SocialMediaScraper.twitter.tw_search import TwSearch
 from SocialMediaScraper.twitter.tw_user import twitter_user_info
 
@@ -16,27 +16,27 @@ def user_info(screen_name, cookies, proxies=None):
     return twitter_user_info(screen_name, cookies, proxies)
 
 
-def post_list(screen_name, cookies, post_num, proxies=None):
+def post_list(user_id, cookies, post_num, proxies=None):
     """
     获取用户帖子列表
-    :param screen_name:
+    :param user_id:
     :param cookies:
     :param post_num:
     :param proxies:
     :return:
     """
-    return TWPostList(cookies, proxies=proxies).get_post_list(screen_name, post_num)
+    return TwPostList(cookies,post_num=post_num, proxies=proxies).tw_post_list(user_id)
 
 
 def post_detail(post_url, cookies, proxies=None):
     """
     获取帖子详情
-    :param post_id:
+    :param post_url:
     :param cookies:
     :param proxies:
     :return:
     """
-    return TwPost(cookies, proxies=proxies).get_post_detail(post_url)
+    return TwPost(cookies, proxies=proxies).tw_post_detail(post_url)
 
 
 def post_comments(post_id, cookies, comment_count, proxies=None):
@@ -48,7 +48,7 @@ def post_comments(post_id, cookies, comment_count, proxies=None):
     :param proxies:
     :return:
     """
-    return TWComment(cookies, proxies=proxies).get_comment_list(post_id, comment_count)
+    return TwComment(cookies,comment_num=comment_count, proxies=proxies).get_comment_list(post_id)
 
 
 def post_search(keyword, cookies, post_num, proxies=None):

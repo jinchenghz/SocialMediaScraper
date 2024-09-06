@@ -1,18 +1,22 @@
 import json
+
+from SocialMediaScraper.models import TwCommentItem
 from SocialMediaScraper.twitter import HEADERS
 from SocialMediaScraper.utils import requests_with_retry
 
 
-class TWComment:
-    def __init__(self, cookies, proxies=None):
+class TwComment:
+    def __init__(self, cookies, comment_num, proxies=None):
         self.cookies = cookies
         self.proxies = proxies
         self.headers = HEADERS.copy()
         self.headers.update({"x-csrf-token": cookies.get("ct0")})
         self.cursor = None
         self.comment_list = []
+        self.comment_num = comment_num
 
-    def get_comment_list(self, post_id, comment_count):
+    def get_comment_list(self, post_id):
+        post_id = post_id.split('/')[-1] if post_id.startswith('https://twitter.com/') else post_id
         variables = {"focalTweetId": post_id, "cursor": self.cursor, "referrer": "tweet",
                      "with_rux_injections": False, "includePromotedContent": True, "withCommunity": True,
                      "withQuickPromoteEligibilityTweetFields": True, "withBirdwatchNotes": True,
@@ -38,8 +42,9 @@ class TWComment:
         }
         response = requests_with_retry.get(
             'https://twitter.com/i/api/graphql/ZkD-1KkxjcrLKp60DPY_dQ/TweetDetail', params=params,
-            cookies=self.cookies, headers=self.headers)
-        if response.status_code == 200:
+            cookies=self.cookies, headers=self.headers, proxies=self.proxies)
+        print(response.text)
+        if response.status_code != 200:
             raise Exception('Twitter api error')
         parse_data = json.loads(response.text)
         if 'errors' in parse_data:
@@ -51,24 +56,27 @@ class TWComment:
                 for entry in instruction['entries']:
                     entryId = entry['entryId']
                     if 'conversationthread' in entryId:
-                        comment_info = {}
+                        comment_info = TwCommentItem()
                         comment_itemContent = entry['content']['items'][0]['item']['itemContent']
                         comment_tweet_results = comment_itemContent['tweet_results']['result']
                         comment_user_results = comment_tweet_results['core']['user_results']['result']
-
-                        comment_info['comment_id'] = comment_tweet_results['legacy'].get('id_str')
-                        comment_info['screen_name'] = comment_user_results['legacy']['screen_name']
-                        comment_info['user_name'] = comment_user_results['legacy']['name']
-                        comment_info['avatar'] = comment_user_results['legacy']['profile_image_url_https']
-                        comment_info['user_id'] = comment_user_results['rest_id']
-                        comment_info['created_time'] = comment_tweet_results['legacy']['created_at']
-                        comment_info['comment_content'] = comment_tweet_results['legacy']['full_text']
-                        comment_info['like_num'] = comment_tweet_results['legacy']['favorite_count']
-
-                        self.comment_list.append(comment_info)
+                        comment_info.comment_id = comment_tweet_results['legacy'].get('id_str')
+                        comment_info.user_name = comment_user_results['legacy']['screen_name']
+                        comment_info.user_full_name = comment_user_results['legacy']['name']
+                        comment_info.avatar = comment_user_results['legacy']['profile_image_url_https']
+                        comment_info.user_id = comment_user_results['rest_id']
+                        comment_info.user_url = f"https://x.com/{comment_info.user_name}"
+                        comment_info.publish_time = comment_tweet_results['legacy']['created_at']
+                        comment_info.content = comment_tweet_results['legacy']['full_text']
+                        comment_info.favorite_count = comment_tweet_results['legacy']['favorite_count']
+                        comment_info.comment_url = f"https://x.com/{comment_info.user_name}/status/{comment_info.comment_id}"
+                        print(comment_info.__dict__)
+                        self.comment_list.append(comment_info.__dict__)
                     if 'cursor-bottom' in entryId:
                         self.cursor = entry['content']
-        if self.cursor and len(self.comment_list) <= comment_count:
-            self.get_comment_list(post_id, comment_count)
-
+        if self.cursor and len(self.comment_list) < self.comment_num:
+            self.get_comment_list(post_id)
         return self.comment_list
+
+# if __name__ == '__main__':
+#     print(TwComment(cookies, 10).get_comment_list('1545735885890768896'))
