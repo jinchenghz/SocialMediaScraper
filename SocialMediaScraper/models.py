@@ -14,10 +14,22 @@ class InsPostListItem:
     content = None
     publish_time = None
 
+    like_count = None
+    comment_count = None
+    user_id = None
+    user_name = None
+    screen_name = None
+    avatar = None
+    image_list = None
+    video_url = None
+    video_cover_image = None
+    video_duration = None
+    play_count = None
+
 
 class InsPostItem:
-    media_id = None
-    text = None
+    post_id = None
+    content = None
     publish_time = None
     like_count = None
     comment_count = None
@@ -86,9 +98,9 @@ class FbPostListItem:
     reaction_count = None
     comments_count = None
     share_count = None
-    imageList = None
-    video = None
-    videoCoverImage = None
+    image_list = None
+    video_list = None
+    video_cover_image = None
     duration = None
 
 
@@ -172,6 +184,11 @@ class TwPostListItem:
     post_url = None
     publish_time = None
 
+    image_list = None
+    video_url_list = None
+    video_cover_image_list = None
+    video_duration_list = None
+
 
 class TwPostItem:
     content = None
@@ -244,6 +261,11 @@ class YtbPostListItem:
     post_url = None
     title = None
     publish_time = None
+
+    view_count = None
+    video_cover_image = None
+    duration = None
+
 
 
 class YtbVideoItem:

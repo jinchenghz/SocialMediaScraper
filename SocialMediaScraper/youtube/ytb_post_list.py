@@ -48,7 +48,22 @@ class YtbPostList:
             item.title = post_value['title']['runs'][0]['text']
             item.video_id = post_value['videoId']
             item.url = f'https://www.youtube.com/watch?v={post_value["videoId"]}'
-            item.published_time = post_value['publishedTimeText']['simpleText']
+            item.publish_time = post_value['publishedTimeText']['simpleText']
+
+            item.view_count = re.findall("([\d,]+)", post_value['viewCountText']['simpleText'])[0].replace(',', '')
+            item.view_count = int(item.view_count)
+            item.video_cover_image = post_value['thumbnail']['thumbnails'][0]['url']
+            _duration = post_value['lengthText']['simpleText']
+            parts = _duration.split(':')
+            if len(parts) == 2:  # 格式为 'm:s'
+                minutes, seconds = map(int, parts)
+                item.duration = minutes * 60 + seconds
+            elif len(parts) == 3:  # 格式为 'h:m:s'
+                hours, minutes, seconds = map(int, parts)
+                item.duration = hours * 3600 + minutes * 60 + seconds
+            else:
+                raise ValueError('Invalid duration format')
+
             print(item.__dict__)
             self.item_list.append(item.__dict__)
         if self.post_num and self.post_num > len(self.item_list) and continuation:

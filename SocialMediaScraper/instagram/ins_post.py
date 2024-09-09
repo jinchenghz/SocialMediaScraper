@@ -69,9 +69,9 @@ class InsPost:
         except:
             create_time = post_info_data['taken_at']
 
-        post_info.media_id = post_info_data['pk']
+        post_info.post_id = post_info_data['pk']
         post_info.content = text
-        post_info.publish_time = create_time
+        post_info.publish_time = create_time * 1000
         post_info.like_count = post_info_data['like_count']
         post_info.comment_count = post_info_data['comment_count']
         post_info.post_url = f'https://www.instagram.com/p/{post_info_data["code"]}'

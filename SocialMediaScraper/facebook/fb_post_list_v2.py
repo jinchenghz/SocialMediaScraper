@@ -86,31 +86,10 @@ class FbPostList:
             data = json.loads(_json)
             edges = data['data']['user']['timeline_list_feed_units']['edges']
             for edge in edges:
-                item = FbPostListItem()
-                item.post_id = edge['node']['post_id']
-                comet_sections = edge['node']['comet_sections']
-                item.content = comet_sections['content']['story']['comet_sections']['message'][
-                    'story']['message']['text']
-                item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
-                item.reaction_count = parse("$..reaction_count").find(comet_sections)[0].value['count']
-                item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
-                item.share_count = parse("$..share_count").find(comet_sections)[0].value['count']
-                story_list = parse("$..story").find(comet_sections)
-                for story in story_list:
-                    story_data = story.value
-                    if story_data.get("creation_time"):
-                        item.post_url = story_data.get("url")
-
-                # 获取媒体信息
-                attachments = parse("$..all_subattachments").find(comet_sections)
-                item.image_list = []
-                for attachment in attachments:
-                    if not attachment.value.get("count"):
-                        continue
-                    item.image_list = [i.value["uri"] for i in parse("$..viewer_image").find(attachment.value)]
-
-                self.post_list.append(item.__dict__)
-                print(item.__dict__)
+                item = self.post_data_parse(edge)
+                if item:
+                    self.post_list.append(item.__dict__)
+                    print(item.__dict__)
             if len(edges):
                 cursor = edges[-1]['cursor']
                 print('cursor', cursor)
@@ -182,70 +161,77 @@ class FbPostList:
                 __edge_list.append(json.loads(_json)['data'])
 
         for edge in __edge_list:
-            item = FbPostListItem()
-            item.post_id = edge['node']['post_id']
-            item.action_id = edge['node']['feedback']['id']
-            comet_sections = edge['node']['comet_sections']
-            try:
-                item.content = comet_sections['content']['story']['comet_sections']['message'][
-                    'story']['message']['text']
-            except:
-                item.content = None
-            item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
-            item.reaction_count = parse("$..reaction_count").find(comet_sections)[0].value['count']
-            item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
-            item.share_count = parse("$..share_count").find(comet_sections)[0].value['count']
-            story_list = parse("$..story").find(comet_sections)
-            for story in story_list:
-                story_data = story.value
-                if story_data.get("creation_time"):
-                    item.post_url = story_data.get("url")
-            if not item.post_url:
-                print('post_url获取失败')
-                continue
-
-            # 获取媒体信息
-            attachments = parse("$..all_subattachments").find(comet_sections)
-            item.imageList = []
-            for attachment in attachments:
-                if not attachment.value.get("count"):
-                    continue
-                item.imageList = [i.value["uri"] for i in parse("$..viewer_image").find(attachment.value)]
-
-            item.video = None
-            item.duration = None
-            item.videoCoverImage = None
-            _attachments = parse("$..attachments").find(comet_sections)
-            for attachment in _attachments:
-                attachment = attachment.value
-                if not attachment:
-                    continue
-                if attachment[0].get("deduplication_key"):
-                    # 短视频
-                    short_form_video_context = parse("$..short_form_video_context").find(attachment[0])
-                    if short_form_video_context:
-                        short_video = short_form_video_context[0].value["playback_video"]
-                        item.video = short_video.get("browser_native_hd_url") if short_video.get(
-                            "browser_native_hd_url") else short_video.get("browser_native_sd_url")
-                        item.duration = int(short_video['length_in_second'])
-                        item.videoCoverImage = short_video['preferred_thumbnail']['image']['uri']
-                        continue
-                    # 长视频
-                    long_video = parse("$..media").find(attachment[0])
-                    if long_video:
-                        long_video = long_video[0].value
-                        item.video = long_video.get("browser_native_hd_url") if long_video.get(
-                            "browser_native_hd_url") else long_video.get("browser_native_sd_url")
-                        item.videoCoverImage = long_video["thumbnailImage"]["uri"]
-                        item.duration = int(long_video["playable_duration_in_ms"]/1000)
-
-            self.post_list.append(item.__dict__)
-            print(item.__dict__)
+            item = self.post_data_parse(edge)
+            if item:
+                self.post_list.append(item.__dict__)
+                print(item.__dict__)
             if edge.get("cursor"):
                 cursor = edge.get("cursor")
         print('cursor', cursor)
         if cursor and len(self.post_list) < self.post_num:
             self.get_next_post(user_id, cursor=cursor)
+
+    @staticmethod
+    def post_data_parse(edge):
+        item = FbPostListItem()
+        item.post_id = edge['node']['post_id']
+        item.action_id = edge['node']['feedback']['id']
+        comet_sections = edge['node']['comet_sections']
+        try:
+            item.content = comet_sections['content']['story']['comet_sections']['message'][
+                'story']['message']['text']
+        except:
+            item.content = None
+        item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
+        item.reaction_count = parse("$..reaction_count").find(comet_sections)[0].value['count']
+        item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
+        item.share_count = parse("$..share_count").find(comet_sections)[0].value['count']
+        story_list = parse("$..story").find(comet_sections)
+        for story in story_list:
+            story_data = story.value
+            if story_data.get("creation_time"):
+                item.post_url = story_data.get("url")
+        if not item.post_url:
+            print('post_url获取失败')
+            return
+
+            # 获取媒体信息
+        attachments = parse("$..all_subattachments").find(comet_sections)
+        item.image_list = []
+        for attachment in attachments:
+            if not attachment.value.get("count"):
+                continue
+            item.image_list = [i.value["uri"] for i in parse("$..viewer_image").find(attachment.value)]
+
+        item.video_url = None
+        item.duration = None
+        item.video_cover_image = None
+        _attachments = parse("$..attachments").find(comet_sections)
+        for attachment in _attachments:
+            attachment = attachment.value
+            if not attachment:
+                continue
+            if attachment[0].get("deduplication_key"):
+                # 短视频
+                short_form_video_context = parse("$..short_form_video_context").find(attachment[0])
+                if short_form_video_context:
+                    short_video = short_form_video_context[0].value["playback_video"]
+                    item.video = short_video.get("browser_native_hd_url") if short_video.get(
+                        "browser_native_hd_url") else short_video.get("browser_native_sd_url")
+                    item.duration = int(short_video['length_in_second'])
+                    item.video_cover_image = short_video['preferred_thumbnail']['image']['uri']
+                    continue
+                # 长视频
+                long_video = parse("$..media").find(attachment[0])
+                if long_video:
+                    long_video = long_video[0].value
+                    if long_video.get("__typename") == "Video":
+                        item.video = long_video.get("browser_native_hd_url") if long_video.get(
+                            "browser_native_hd_url") else long_video.get("browser_native_sd_url")
+                        item.video_cover_image = long_video["thumbnailImage"]["uri"]
+                        item.duration = int(long_video["playable_duration_in_ms"] / 1000)
+
+        return item
 
 
 if __name__ == '__main__':
