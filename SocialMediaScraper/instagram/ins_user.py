@@ -32,4 +32,4 @@ def get_user_data(user_name, cookies, proxies=None):
         user_info.user_id = user['id']
         user_info.followers_count = str(user['edge_followed_by']['count'])
         user_info.post_count = str(user['edge_owner_to_timeline_media']['count'])
-        return user_info
+        return user_info.__dict__

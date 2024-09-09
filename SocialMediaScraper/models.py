@@ -8,97 +8,11 @@ class InsUserItem:
     post_count = None
 
 
-class TwPostSearchItem:
-    avatar = None
-    user_id = None
-    user_name = None
-    user_full_name = None
-    followers_count = None
-    friends_count = None
-    statuses_count = None
-    post_id = None
-    content = None
-    publish_time = None
-    favorite_count = None
-    reply_count = None
-    retweet_count = None
-    bookmark_count = None
-    views_count = None
-    type = None
-    post_url = None
-    url = None
-    image_list = None
-    video_url = None
-    video_cover_image = None
-    duration = None
-
-
 class InsPostListItem:
     post_id = None
     post_url = None
     content = None
     publish_time = None
-
-
-class TwUserItem:
-    avatar = None
-    user_full_name = None
-    favourites_count = None
-    followers_count = None
-    join_time = None
-    friends_count = None
-    location = None
-    user_id = None
-    user_name = None
-    listed_count = None
-    media_count = None
-    statuses_count = None
-    birthdate = None
-    subscriptions_count = None
-
-
-class TwPostListItem:
-    user_id = None
-    user_name = None
-    views_count = None
-    content = None
-    bookmark_count = None
-    favorite_count = None
-    reply_count = None
-    retweet_count = None
-    post_id = None
-    post_url = None
-    publish_time = None
-
-
-class TwPostItem:
-    content = None
-    publish_time = None
-    favorite_count = None
-    reply_count = None
-    retweet_count = None
-    bookmark_count = None
-    views_count = None
-    type = None
-    post_id = None
-    post_url = None
-    image_list = None
-    video_url = None
-    video_cover_image = None
-    video_duration = None
-
-
-class TwCommentItem:
-    comment_id = None
-    user_name = None
-    user_full_name = None
-    user_url = None
-    avatar = None
-    user_id = None
-    publish_time = None
-    content = None
-    favorite_count = None
-    comment_url = None
 
 
 class InsPostItem:
@@ -165,9 +79,17 @@ class FbUserItem:
 
 class FbPostListItem:
     post_id = None
+    action_id = None
     content = None
     publish_time = None
     post_url = None
+    reaction_count = None
+    comments_count = None
+    share_count = None
+    imageList = None
+    video = None
+    videoCoverImage = None
+    duration = None
 
 
 class FbPostItem:
@@ -216,6 +138,92 @@ class FbSearchItem:
     comment_count = None
     image_list = None
     video_list = None
+    video_cover_image = None
+    duration = None
+
+
+class TwUserItem:
+    avatar = None
+    user_full_name = None
+    favourites_count = None
+    followers_count = None
+    join_time = None
+    friends_count = None
+    location = None
+    user_id = None
+    user_name = None
+    listed_count = None
+    media_count = None
+    statuses_count = None
+    birthdate = None
+    subscriptions_count = None
+
+
+class TwPostListItem:
+    user_id = None
+    user_name = None
+    views_count = None
+    content = None
+    bookmark_count = None
+    favorite_count = None
+    reply_count = None
+    retweet_count = None
+    post_id = None
+    post_url = None
+    publish_time = None
+
+
+class TwPostItem:
+    content = None
+    publish_time = None
+    favorite_count = None
+    reply_count = None
+    retweet_count = None
+    bookmark_count = None
+    views_count = None
+    type = None
+    post_id = None
+    post_url = None
+    image_list = None
+    video_url = None
+    video_cover_image = None
+    video_duration = None
+
+
+class TwCommentItem:
+    comment_id = None
+    user_name = None
+    user_full_name = None
+    user_url = None
+    avatar = None
+    user_id = None
+    publish_time = None
+    content = None
+    favorite_count = None
+    comment_url = None
+
+
+class TwPostSearchItem:
+    avatar = None
+    user_id = None
+    user_name = None
+    user_full_name = None
+    followers_count = None
+    friends_count = None
+    statuses_count = None
+    post_id = None
+    content = None
+    publish_time = None
+    favorite_count = None
+    reply_count = None
+    retweet_count = None
+    bookmark_count = None
+    views_count = None
+    type = None
+    post_url = None
+    url = None
+    image_list = None
+    video_url = None
     video_cover_image = None
     duration = None
 

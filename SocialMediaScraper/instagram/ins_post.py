@@ -183,9 +183,9 @@ class InsPost:
                 comment_info.comment_content = comment['text']
                 comment_info.create_time = comment['created_at']
                 comment_info.like_num = comment['comment_like_count']
-                self.comment_list.append(comment_info)
+                self.comment_list.append(comment_info.__dict__)
 
             has_more_headload_comments = parse_data['has_more_headload_comments']
             if has_more_headload_comments and len(self.comment_list) < comment_num:
                 self.get_comments(post_id, comment_num, parse_data['next_min_id'])
-            return self.comment_list[:comment_num]
+            return self.comment_list

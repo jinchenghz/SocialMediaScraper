@@ -24,7 +24,7 @@ class FbPostList:
         # (item)
         return item
 
-    def get_post_list(self, userId, cursor=None):
+    def get_post_list(self, userId):
         try:
             userId = str(int(userId))
         except:
@@ -33,6 +33,7 @@ class FbPostList:
                 userId = self.get_user_info(userId)['user_id']
             else:
                 userId = self.get_user_info(f"https://www.facebook.com/{userId}/")['user_id']
+        print("UserId: ", userId)
         variables = {"count": 1, "feedbackSource": 0, "feedLocation": "TIMELINE", "omitPinnedPost": True,
                      "privacySelectorRenderLocation": "COMET_STREAM", "renderLocation": "timeline", "scale": 1.5,
                      "userID": userId, "postedBy": {"group": "OWNER"},
@@ -75,35 +76,46 @@ class FbPostList:
 
         response = requests_with_retry.post('https://www.facebook.com/api/graphql/', cookies=self.cookies,
                                             headers=self.headers, proxies=self.proxies, data=data).text
+        # print(response)
         if 'for (;;)' in response:
             raise Exception('cookie登录失效')
         json_list = response.split('\n')
         for _json in json_list:
-            if '"timeline_list_feed_units":' in _json:
-                data = json.loads(_json)
-                edges = data['data']['user']['timeline_list_feed_units']['edges']
-                for edge in edges:
-                    item = FbPostListItem()
-                    item.post_id = edge['node']['post_id']
-                    comet_sections = edge['node']['comet_sections']
-                    item.content = comet_sections['content']['story']['comet_sections']['message'][
-                        'story']['message']['text']
-                    item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
-                    item.reaction_count = int(parse("$..i18n_reaction_count").find(comet_sections)[0].value)
-                    item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
-                    item.share_count = int(parse("$..i18n_share_count").find(comet_sections)[0].value)
-                    story_list = parse("$..story").find(comet_sections)
-                    for story in story_list:
-                        story_data = story.value
-                        if story_data.get("creation_time"):
-                            item.post_url = story_data.get("url")
-                    self.post_list.append(item.__dict__)
-                    print(item.__dict__)
-                if len(edges):
-                    cursor = edges[-1]['cursor']
-                    print('cursor', cursor)
-                    if cursor and len(self.post_list) < self.post_num:
-                        self.get_next_post(userId, cursor=cursor)
+            if not '"timeline_list_feed_units":' in _json:
+                continue
+            data = json.loads(_json)
+            edges = data['data']['user']['timeline_list_feed_units']['edges']
+            for edge in edges:
+                item = FbPostListItem()
+                item.post_id = edge['node']['post_id']
+                comet_sections = edge['node']['comet_sections']
+                item.content = comet_sections['content']['story']['comet_sections']['message'][
+                    'story']['message']['text']
+                item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
+                item.reaction_count = parse("$..reaction_count").find(comet_sections)[0].value['count']
+                item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
+                item.share_count = parse("$..share_count").find(comet_sections)[0].value['count']
+                story_list = parse("$..story").find(comet_sections)
+                for story in story_list:
+                    story_data = story.value
+                    if story_data.get("creation_time"):
+                        item.post_url = story_data.get("url")
+
+                # 获取媒体信息
+                attachments = parse("$..all_subattachments").find(comet_sections)
+                item.image_list = []
+                for attachment in attachments:
+                    if not attachment.value.get("count"):
+                        continue
+                    item.image_list = [i.value["uri"] for i in parse("$..viewer_image").find(attachment.value)]
+
+                self.post_list.append(item.__dict__)
+                print(item.__dict__)
+            if len(edges):
+                cursor = edges[-1]['cursor']
+                print('cursor', cursor)
+                if cursor and len(self.post_list) < self.post_num:
+                    self.get_next_post(userId, cursor=cursor)
 
         return self.post_list
 
@@ -172,6 +184,7 @@ class FbPostList:
         for edge in __edge_list:
             item = FbPostListItem()
             item.post_id = edge['node']['post_id']
+            item.action_id = edge['node']['feedback']['id']
             comet_sections = edge['node']['comet_sections']
             try:
                 item.content = comet_sections['content']['story']['comet_sections']['message'][
@@ -179,11 +192,9 @@ class FbPostList:
             except:
                 item.content = None
             item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
-            # 可能出现 1.3K
-            item.reaction_count = parse("$..i18n_reaction_count").find(comet_sections)[0].value
+            item.reaction_count = parse("$..reaction_count").find(comet_sections)[0].value['count']
             item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
-            # 可能出现 1.3K
-            item.share_count = parse("$..i18n_share_count").find(comet_sections)[0].value
+            item.share_count = parse("$..share_count").find(comet_sections)[0].value['count']
             story_list = parse("$..story").find(comet_sections)
             for story in story_list:
                 story_data = story.value
@@ -192,6 +203,41 @@ class FbPostList:
             if not item.post_url:
                 print('post_url获取失败')
                 continue
+
+            # 获取媒体信息
+            attachments = parse("$..all_subattachments").find(comet_sections)
+            item.imageList = []
+            for attachment in attachments:
+                if not attachment.value.get("count"):
+                    continue
+                item.imageList = [i.value["uri"] for i in parse("$..viewer_image").find(attachment.value)]
+
+            item.video = None
+            item.duration = None
+            item.videoCoverImage = None
+            _attachments = parse("$..attachments").find(comet_sections)
+            for attachment in _attachments:
+                attachment = attachment.value
+                if not attachment:
+                    continue
+                if attachment[0].get("deduplication_key"):
+                    # 短视频
+                    short_form_video_context = parse("$..short_form_video_context").find(attachment[0])
+                    if short_form_video_context:
+                        short_video = short_form_video_context[0].value["playback_video"]
+                        item.video = short_video.get("browser_native_hd_url") if short_video.get(
+                            "browser_native_hd_url") else short_video.get("browser_native_sd_url")
+                        item.duration = int(short_video['length_in_second'])
+                        item.videoCoverImage = short_video['preferred_thumbnail']['image']['uri']
+                        continue
+                    # 长视频
+                    long_video = parse("$..media").find(attachment[0])
+                    if long_video:
+                        long_video = long_video[0].value
+                        item.video = long_video.get("browser_native_hd_url") if long_video.get(
+                            "browser_native_hd_url") else long_video.get("browser_native_sd_url")
+                        item.videoCoverImage = long_video["thumbnailImage"]["uri"]
+                        item.duration = int(long_video["playable_duration_in_ms"]/1000)
 
             self.post_list.append(item.__dict__)
             print(item.__dict__)
@@ -202,21 +248,19 @@ class FbPostList:
             self.get_next_post(user_id, cursor=cursor)
 
 
-# if __name__ == '__main__':
-#     cookies = {
-#         'sb': '67idZngRJP3RYQKjgf1ueaZe',
-#         'ps_n': '1',
-#         'ps_l': '1',
-#         'm_ls': '%7B%22100065413398194%22%3A%7B%22c%22%3A%7B%221%22%3A%22HCwAABZiFtSW8-gBEwUW5PrbtsnALQA%22%2C%222%22%3A%22GRwVQBxMAAAWARbY7O3pDBYAFtjs7ekMABYoAA%22%2C%2295%22%3A%22HCwAABYCFsiB6JUKEwUW5PrbtsnALQA%22%7D%2C%22d%22%3A%22c9cbfca9-06be-4808-9475-70285c72ff85%22%2C%22s%22%3A%220%22%2C%22u%22%3A%22aqambi%22%7D%7D',
-#         'c_user': '100078262803417',
-#         'datr': 'W-jPZistuI43-g6u3PoY_ncR',
-#         'dpr': '1.2000000476837158',
-#         'fr': '1ThWqbjclYHg3bpVO.AWU22-qFrVBRA_cgM0MIOK5XC4U.Bm2bJY..AAA.0.0.Bm2bJY.AWVbVK7u1eA',
-#         'xs': '12%3AZI_MkoAQf05w9g%3A2%3A1724901465%3A-1%3A14036%3A%3AAcUUMRExuSGRMld2ln6bA21nxCW_5AAcyc_LJ9T9X6A',
-#         'presence': 'C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1725543045394%2C%22v%22%3A1%7D',
-#         'wd': '2134x202',
-#     }
-#
-#     fb_post_list = FbPostList(cookies=cookies, post_num=10000)
-#     # fb_post_list.get_post_list('https://www.facebook.com/michelbarnier')
-#     fb_post_list.get_next_post('100046801763578','AQHRD9-suv-zddQQpW4yIlwdftxWKlF1NjD5ATwtWTU59VEjRA7DIO1LWvQJWSs_S0ZRy0HjnxqEq99cFslGCAZ9DzXOaYqeP6kMhsZbJtExSPjvP8GMr_63qmZZkIhIx883fcVL_rRojVHfJWl_eZxbCSqCXHkDowxBtJQfbu12m87Go-OjWdES8mIYGp_zP-FYiaMBrEOgzeVxitnCY-UuXR-4a98h6L9Vn1aOgOvFEGrsdRPlI2YNIxMm_aMXHodeQyJUKbP7vI3108hgrCK-pdTTB6mNE7krskwzHjZdGGRnvCkmxVCfCNtcRuXZLlu8dIbjA17rPYI4tgZGUxwD7acWBytoaMN739mW4u3FhA-g0EF9ZM5Up_cKB4_VtWadgi-x_8OB5VT-d4Gb7xkb60TniNeVlol6y5UhmegseGvfL47uAbLw7OhK4_AU60hDP5joqwHAn013ap8nQAsYd46SvHCJ1mH4dbdgKNIW4BACn0cctNZuuUK2jnAqWaDe2kA5ZcMCkZDPt_95v0yJqQMNqz8n51srHdURJQcidH2mIGt3v4Q1ljEGxHhCitgVRn6iMikgI7t_IcgTaOq_EvTrHqnwpmXvVybaTHV9iVPuR5U6syqFM0MhFjaW7LuHn_h0A5qnsx_Q2Mwr3l9-IhGqUlF1AH50zDiASnJHX8c8DGt70DdixBDZ0hybqfCca-PNr7DNr96L3U5meoifCWmJkwDQfe5qcBdrknpWON8')
+if __name__ == '__main__':
+    cookies = {
+        'sb': '67idZngRJP3RYQKjgf1ueaZe',
+        'ps_n': '1',
+        'ps_l': '1',
+        'm_ls': '%7B%22100065413398194%22%3A%7B%22c%22%3A%7B%221%22%3A%22HCwAABZiFtSW8-gBEwUW5PrbtsnALQA%22%2C%222%22%3A%22GRwVQBxMAAAWARbY7O3pDBYAFtjs7ekMABYoAA%22%2C%2295%22%3A%22HCwAABYCFsiB6JUKEwUW5PrbtsnALQA%22%7D%2C%22d%22%3A%22c9cbfca9-06be-4808-9475-70285c72ff85%22%2C%22s%22%3A%220%22%2C%22u%22%3A%22aqambi%22%7D%7D',
+        'c_user': '100078262803417',
+        'datr': 'W-jPZistuI43-g6u3PoY_ncR',
+        'wd': '2134x499',
+        'fr': '1CaiMmKDx8fHSKLn6.AWWlixK9B0UdbB5A05ydh-6kCJc.Bm3m1u..AAA.0.0.Bm3m1u.AWWgm1yWqCg',
+        'xs': '12%3AZI_MkoAQf05w9g%3A2%3A1724901465%3A-1%3A14036%3A%3AAcWB-FTbOB1pANr4mi7TAST1m3HFEfsfnwXyFbHI78g',
+        'dpr': '1.2000000476837158',
+        'presence': 'C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1725853209933%2C%22v%22%3A1%7D',
+    }
+    fb_post_list = FbPostList(cookies=cookies, post_num=10)
+    fb_post_list.get_post_list('https://www.facebook.com/awel.abiel')
