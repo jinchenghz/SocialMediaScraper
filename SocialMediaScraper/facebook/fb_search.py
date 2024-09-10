@@ -139,7 +139,7 @@ class FBSearch:
                                 video_url = node['media']['browser_native_sd_url']
                             item['video_list'].append(video_url)
                             item['video_cover_image'].append(node['media']['preferred_thumbnail']['image']['uri'])
-                            item['duration'].append(int(node['media']['playable_duration_in_ms']/1000))
+                            item['duration'].append(int(node['media']['playable_duration_in_ms'] / 1000))
 
                 else:
                     if not attachment.get('media'):
@@ -166,20 +166,3 @@ class FBSearch:
             # 请求下一页
             self.fb_search_post(keyword, post_num, page_info['end_cursor'])
         return self.post_list
-
-
-if __name__ == '__main__':
-    cookies = {
-        'sb': '67idZngRJP3RYQKjgf1ueaZe',
-        'ps_n': '1',
-        'ps_l': '1',
-        'm_ls': '%7B%22100065413398194%22%3A%7B%22c%22%3A%7B%221%22%3A%22HCwAABZiFtSW8-gBEwUW5PrbtsnALQA%22%2C%222%22%3A%22GRwVQBxMAAAWARbY7O3pDBYAFtjs7ekMABYoAA%22%2C%2295%22%3A%22HCwAABYCFsiB6JUKEwUW5PrbtsnALQA%22%7D%2C%22d%22%3A%22c9cbfca9-06be-4808-9475-70285c72ff85%22%2C%22s%22%3A%220%22%2C%22u%22%3A%22aqambi%22%7D%7D',
-        'c_user': '100078262803417',
-        'datr': 'W-jPZistuI43-g6u3PoY_ncR',
-        'presence': 'C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1725543614912%2C%22v%22%3A1%7D',
-        'xs': '12%3AZI_MkoAQf05w9g%3A2%3A1724901465%3A-1%3A14036%3A%3AAcVWvIC6Np5Fe8LcYjQdJAcslgTJlI5BNSnyoBCuEy4',
-        'dpr': '1.5',
-        'wd': '3200x1268',
-        'fr': '1hjnz3DjXuHsElCM1.AWVeSmJv3LhSPMlMsdAEMYzJph4.Bm2bw6..AAA.0.0.Bm2rc8.AWVOLcNb-d4',
-    }
-    print(FBSearch(cookies=cookies).fb_search_post("delireba", 30))

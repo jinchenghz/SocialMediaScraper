@@ -1,4 +1,23 @@
-class InsUserItem:
+class BaseItem:
+
+    def __getattr__(self, item):
+        if item in self.__dict__:
+            return self.__dict__[item]
+        elif item in self.__class__.__dict__:
+            return self.__class__.__dict__[item]
+        else:
+            raise AttributeError(f"Attribute '{item}' is not defined")
+
+    def __setattr__(self, key, value):
+        if key in self.__dict__:
+            super().__setattr__(key, value)
+        elif key in self.__class__.__dict__:
+            self.__dict__[key] = value
+        else:
+            raise AttributeError(f"Cannot set undefined attribute '{key}'")
+
+
+class InsUserItem(BaseItem):
     user_name = None
     user_id = None
     user_url = None
@@ -8,7 +27,7 @@ class InsUserItem:
     post_count = None
 
 
-class InsPostListItem:
+class InsPostListItem(BaseItem):
     post_id = None
     post_url = None
     content = None
@@ -27,7 +46,7 @@ class InsPostListItem:
     play_count = None
 
 
-class InsPostItem:
+class InsPostItem(BaseItem):
     post_id = None
     content = None
     publish_time = None
@@ -45,7 +64,7 @@ class InsPostItem:
     video_duration = None
 
 
-class InsCommentItem:
+class InsCommentItem(BaseItem):
     comment_id = None
     user_id = None
     user_name = None
@@ -56,7 +75,7 @@ class InsCommentItem:
     like_num = None
 
 
-class InsSearchItem:
+class InsSearchItem(BaseItem):
     post_id = None
     post_url = None
     content = None
@@ -75,7 +94,7 @@ class InsSearchItem:
     duration = None
 
 
-class FbUserItem:
+class FbUserItem(BaseItem):
     user_name = None
     user_id = None
     user_url = None
@@ -89,7 +108,7 @@ class FbUserItem:
     birthday = None
 
 
-class FbPostListItem:
+class FbPostListItem(BaseItem):
     post_id = None
     action_id = None
     content = None
@@ -99,12 +118,12 @@ class FbPostListItem:
     comments_count = None
     share_count = None
     image_list = None
-    video_list = None
+    video_url = None
     video_cover_image = None
     duration = None
 
 
-class FbPostItem:
+class FbPostItem(BaseItem):
     user_id = None
     user_url = None
     user_name = None
@@ -124,7 +143,7 @@ class FbPostItem:
     video_duration = None
 
 
-class FbCommentItem:
+class FbCommentItem(BaseItem):
     comment_id = None
     gender = None
     user_id = None
@@ -136,7 +155,7 @@ class FbCommentItem:
     create_time = None
 
 
-class FbSearchItem:
+class FbSearchItem(BaseItem):
     post_id = None
     action_id = None
     user_name = None
@@ -154,7 +173,7 @@ class FbSearchItem:
     duration = None
 
 
-class TwUserItem:
+class TwUserItem(BaseItem):
     avatar = None
     user_full_name = None
     favourites_count = None
@@ -171,7 +190,7 @@ class TwUserItem:
     subscriptions_count = None
 
 
-class TwPostListItem:
+class TwPostListItem(BaseItem):
     user_id = None
     user_name = None
     views_count = None
@@ -190,7 +209,7 @@ class TwPostListItem:
     video_duration_list = None
 
 
-class TwPostItem:
+class TwPostItem(BaseItem):
     content = None
     publish_time = None
     favorite_count = None
@@ -207,7 +226,7 @@ class TwPostItem:
     video_duration = None
 
 
-class TwCommentItem:
+class TwCommentItem(BaseItem):
     comment_id = None
     user_name = None
     user_full_name = None
@@ -220,7 +239,7 @@ class TwCommentItem:
     comment_url = None
 
 
-class TwPostSearchItem:
+class TwPostSearchItem(BaseItem):
     avatar = None
     user_id = None
     user_name = None
@@ -245,7 +264,7 @@ class TwPostSearchItem:
     duration = None
 
 
-class YtbUserItem:
+class YtbUserItem(BaseItem):
     user_name = None
     user_id = None
     user_url = None
@@ -256,7 +275,7 @@ class YtbUserItem:
     view_count = None
 
 
-class YtbPostListItem:
+class YtbPostListItem(BaseItem):
     post_id = None
     post_url = None
     title = None
@@ -267,8 +286,7 @@ class YtbPostListItem:
     duration = None
 
 
-
-class YtbVideoItem:
+class YtbVideoItem(BaseItem):
     avatar = None
     follower_count = None
     title = None
@@ -286,7 +304,7 @@ class YtbVideoItem:
     comment_count = None
 
 
-class YtbCommentItem:
+class YtbCommentItem(BaseItem):
     comment_id = None
     comment_content = None
     comment_time = None
@@ -298,7 +316,7 @@ class YtbCommentItem:
     comment_user_avatar = None
 
 
-class YtbPostSearchItem:
+class YtbPostSearchItem(BaseItem):
     content = None
     create_time = None
     duration = None

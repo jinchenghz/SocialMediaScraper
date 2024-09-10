@@ -216,7 +216,7 @@ class FbPostList:
                 short_form_video_context = parse("$..short_form_video_context").find(attachment[0])
                 if short_form_video_context:
                     short_video = short_form_video_context[0].value["playback_video"]
-                    item.video = short_video.get("browser_native_hd_url") if short_video.get(
+                    item.video_url = short_video.get("browser_native_hd_url") if short_video.get(
                         "browser_native_hd_url") else short_video.get("browser_native_sd_url")
                     item.duration = int(short_video['length_in_second'])
                     item.video_cover_image = short_video['preferred_thumbnail']['image']['uri']
@@ -226,7 +226,7 @@ class FbPostList:
                 if long_video:
                     long_video = long_video[0].value
                     if long_video.get("__typename") == "Video":
-                        item.video = long_video.get("browser_native_hd_url") if long_video.get(
+                        item.video_url = long_video.get("browser_native_hd_url") if long_video.get(
                             "browser_native_hd_url") else long_video.get("browser_native_sd_url")
                         item.video_cover_image = long_video["thumbnailImage"]["uri"]
                         item.duration = int(long_video["playable_duration_in_ms"] / 1000)

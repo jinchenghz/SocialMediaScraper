@@ -17,6 +17,8 @@ class FbPost:
         self.comment_list = []
 
     def get_post_detail(self, post_url):
+        if '/reel/' in post_url:
+            raise Exception('暂不支持获取reel帖子')
         response = requests_with_retry.get(url=post_url, headers=self.headers, proxies=self.proxies).text
         if 'reaction_count' not in response:
             response = requests_with_retry.get(url=post_url, cookies=self.cookies, headers=self.headers,
@@ -229,8 +231,9 @@ class FbPost:
         if next_pid and len(self.image_list) < int(count):
             self.get_more_image(node_id=next_pid[0], mediasetToken=mediasetToken, count=count)
 
-    def fb_comment(self, post_url, comment_num, end_cursor=None):
-        action_id = self.get_post_detail(post_url).get('action_id')
+    def fb_comment(self, post_url=None, action_id=None, comment_num=10, end_cursor=None):
+        if not action_id:
+            action_id = self.get_post_detail(post_url).get('action_id')
         variables = {"commentsAfterCount": -1,
                      "commentsAfterCursor": end_cursor,
                      "commentsBeforeCount": None, "commentsBeforeCursor": None, "commentsIntentToken": None,

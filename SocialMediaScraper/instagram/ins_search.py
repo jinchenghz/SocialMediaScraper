@@ -19,7 +19,8 @@ class InsSearch:
         }
         try:
             response = requests.get('https://www.instagram.com/api/v1/tags/web_info/', params=params,
-                                    cookies=self.cookies, headers=self.headers, proxies=self.proxies).json()
+                                    cookies=self.cookies, headers=self.headers, proxies=self.proxies).text
+            response = json.loads(response)
         except:
             return []
         sections = response['data']['top']['sections']
