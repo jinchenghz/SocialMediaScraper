@@ -33,7 +33,7 @@ class InsPostList:
         for post in parse_data['items']:
             item = InsPostListItem()
             item.post_id = post['code']
-            item.publish_time = post['taken_at']*1000
+            item.publish_time = post['taken_at'] * 1000
             item.content = post['caption']['text']
             item.post_url = f"https://www.instagram.com/p/{post['code']}/"
             item.like_count = post['like_count']
@@ -43,12 +43,7 @@ class InsPostList:
             item.user_name = user_info['username']
             item.screen_name = user_info['full_name']
             item.avatar = user_info['hd_profile_pic_url_info']['url']
-            item.image_list = [post['image_versions2']['candidates'][0]['url']]
 
-            item.video_url = None
-            item.video_cover_image = None
-            item.video_duration = None
-            item.play_count = None
             if post.get("video_versions"):
                 item.video_url = post.get("video_versions")[0].get("url").replace('\\u0025', '%').replace('\\', "")
                 video_cover_image = post.get("image_versions2", {}).get("candidates", [])
@@ -57,7 +52,16 @@ class InsPostList:
                     item.image_list = None
                     item.video_duration = int(post.get("video_duration"))
                     item.play_count = post.get("play_count")
-
+            else:
+                if post.get("carousel_media") is None:
+                    item.image_list = [post['image_versions2']['candidates'][0]['url']]
+                else:
+                    item.image_list = [image["image_versions2"]["candidates"][0]["url"] for image in
+                                       post['carousel_media']]
+                item.video_url = None
+                item.video_cover_image = None
+                item.video_duration = None
+                item.play_count = None
             print(item.__dict__)
             self.post_list.extend(item.__dict__)
 
@@ -68,3 +72,4 @@ class InsPostList:
                 while more_available and len(self.post_list) < post_num:
                     self.get_post_list(user_name, post_num, next_max_id)
         return self.post_list
+

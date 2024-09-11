@@ -182,7 +182,7 @@ class FbPostList:
                 'story']['message']['text']
         except:
             item.content = None
-        item.publish_time = parse("$..creation_time").find(comet_sections)[0].value
+        item.publish_time = parse("$..creation_time").find(comet_sections)[0].value*1000
         item.reaction_count = parse("$..reaction_count").find(comet_sections)[0].value['count']
         item.comments_count = parse("$..comments").find(comet_sections)[0].value["total_count"]
         item.share_count = parse("$..share_count").find(comet_sections)[0].value['count']
@@ -233,20 +233,3 @@ class FbPostList:
 
         return item
 
-
-if __name__ == '__main__':
-    cookies = {
-        'sb': '67idZngRJP3RYQKjgf1ueaZe',
-        'ps_n': '1',
-        'ps_l': '1',
-        'm_ls': '%7B%22100065413398194%22%3A%7B%22c%22%3A%7B%221%22%3A%22HCwAABZiFtSW8-gBEwUW5PrbtsnALQA%22%2C%222%22%3A%22GRwVQBxMAAAWARbY7O3pDBYAFtjs7ekMABYoAA%22%2C%2295%22%3A%22HCwAABYCFsiB6JUKEwUW5PrbtsnALQA%22%7D%2C%22d%22%3A%22c9cbfca9-06be-4808-9475-70285c72ff85%22%2C%22s%22%3A%220%22%2C%22u%22%3A%22aqambi%22%7D%7D',
-        'c_user': '100078262803417',
-        'datr': 'W-jPZistuI43-g6u3PoY_ncR',
-        'wd': '2134x499',
-        'fr': '1CaiMmKDx8fHSKLn6.AWWlixK9B0UdbB5A05ydh-6kCJc.Bm3m1u..AAA.0.0.Bm3m1u.AWWgm1yWqCg',
-        'xs': '12%3AZI_MkoAQf05w9g%3A2%3A1724901465%3A-1%3A14036%3A%3AAcWB-FTbOB1pANr4mi7TAST1m3HFEfsfnwXyFbHI78g',
-        'dpr': '1.2000000476837158',
-        'presence': 'C%7B%22t3%22%3A%5B%5D%2C%22utc3%22%3A1725853209933%2C%22v%22%3A1%7D',
-    }
-    fb_post_list = FbPostList(cookies=cookies, post_num=10)
-    fb_post_list.get_post_list('https://www.facebook.com/awel.abiel')

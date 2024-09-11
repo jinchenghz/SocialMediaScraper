@@ -486,3 +486,4 @@ process.stdout.write(result);
         print(result)
         os.remove(authorization_js_path)
         return result
+

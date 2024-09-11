@@ -81,7 +81,7 @@ class InsSearchItem(BaseItem):
     content = None
     publish_time = None
     user_id = None
-    user_full_name = None
+    screen_name = None
     user_name = None
     user_url = None
     avatar = None
@@ -91,7 +91,7 @@ class InsSearchItem(BaseItem):
     play_count = None
     video_url = None
     video_cover_image = None
-    duration = None
+    video_duration = None
 
 
 class FbUserItem(BaseItem):
@@ -131,16 +131,16 @@ class FbPostItem(BaseItem):
     post_url = None
     action_id = None
     view_count = None
-    react_count = None
-    comment_count = None
+    reaction_count = None
+    comments_count = None
     share_count = None
     content = None
-    create_time = None
+    publish_time = None
     post_id = None
     image_list = None
     video_url = None
     video_cover_image = None
-    video_duration = None
+    duration = None
 
 
 class FbCommentItem(BaseItem):
@@ -193,6 +193,7 @@ class TwUserItem(BaseItem):
 class TwPostListItem(BaseItem):
     user_id = None
     user_name = None
+    user_full_name = None
     views_count = None
     content = None
     bookmark_count = None
@@ -221,9 +222,9 @@ class TwPostItem(BaseItem):
     post_id = None
     post_url = None
     image_list = None
-    video_url = None
-    video_cover_image = None
-    video_duration = None
+    video_url_list = None
+    video_cover_image_list = None
+    video_duration_list = None
 
 
 class TwCommentItem(BaseItem):
@@ -273,6 +274,7 @@ class YtbUserItem(BaseItem):
     description = None
     video_count = None
     view_count = None
+    channelId = None
 
 
 class YtbPostListItem(BaseItem):

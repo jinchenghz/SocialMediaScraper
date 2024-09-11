@@ -24,8 +24,7 @@ class TwPostList:
         if not userId.isdigit():
             userId = twitter_user_info(userId, cookies=self.cookies, proxies=self.proxies).get("user_id")
         if cursor:
-            variables = {"userId": f"{userId}", "count": 20, "cursor": f"{cursor}", "includePromotedContent": True,
-                         "withQuickPromoteEligibilityTweetFields": True, "withVoice": True, "withV2Timeline": True}
+            variables = {"userId": f"{userId}", "count": 20, "cursor": f"{cursor}", "includePromotedContent": True,"withQuickPromoteEligibilityTweetFields": True, "withVoice": True, "withV2Timeline": True}
 
         else:
             variables = {"userId": f"{userId}", "count": 20, "includePromotedContent": True,
@@ -63,7 +62,10 @@ class TwPostList:
             if 'views' not in tweet.keys():
                 continue
             user_name = tweet['core']['user_results']['result']['legacy']['screen_name']
-            views = tweet['views'].get('count')
+            if 'retweeted_status_result' not in tweet["legacy"].keys():
+                views = tweet['views'].get('count')
+            else:
+                views = tweet["legacy"]['retweeted_status_result']['result']['views'].get('count')
             legacy = tweet['legacy']
             if 'full_text' not in legacy.keys():
                 continue
@@ -97,10 +99,9 @@ class TwPostList:
                     video_cover_image_list.append(m.get("media_url_https"))
                     video_duration_list.append(int(m['video_info'].get('duration_millis') / 1000))
             item.image_list = image_list if image_list else None
-            item.video_url = video_url_list[0] if video_url_list else None
-            item.video_cover_image = video_cover_image_list[
-                0] if video_cover_image_list else None
-            item.video_duration = video_duration_list[0] if video_duration_list else None
+            item.video_url_list = video_url_list if video_url_list else None
+            item.video_cover_image_list = video_cover_image_list if video_cover_image_list else None
+            item.video_duration_list = video_duration_list if video_duration_list else None
 
             print(item.__dict__)
             self.post_list.append(item.__dict__)
@@ -110,21 +111,3 @@ class TwPostList:
         if cursor and self.post_num > len(self.post_list):
             self.tw_post_list(userId, cursor)
 
-
-if __name__ == '__main__':
-    cookies = {
-        'night_mode': '2',
-        'g_state': '{"i_l":0}',
-        'kdt': 'mvxnlwH9sixk66F7srsCpTQy3bmnHkJBXqq5JkOT',
-        'lang': 'en',
-        'gt': '1833070446423794075',
-        'ads_prefs': '"HBIRAAA="',
-        'auth_token': '625329f8b807bdac1cda1b97442e9f61b165c223',
-        'guest_id_ads': 'v1%3A172587303033737014',
-        'guest_id_marketing': 'v1%3A172587303033737014',
-        'guest_id': 'v1%3A172587303033737014',
-        'twid': 'u%3D1698901454076227584',
-        'ct0': '9fadb013b4530110b552d481f384d811f9bd5ac8d64a8ceb326eb1026cf3a4a7a178b062b57af4c34afeef150f024ef41c8ad96cbbf3f3dfeef54d80bdd0ad1a7a2ee4a9940d9437fed90c710087a511',
-        'personalization_id': '"v1_dKobad34izz2II/xJrpJbQ=="',
-    }
-    TwPostList(cookies, 10).tw_post_list('MarioNawfal')

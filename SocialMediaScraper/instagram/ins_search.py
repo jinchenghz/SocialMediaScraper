@@ -49,17 +49,17 @@ class InsSearch:
                                        media['carousel_media']]
                 item.like_count = media['like_count']
                 item.comment_count = media['comment_count']
-                item.play_count = media.get('play_count', 0)
+                item.play_count = media.get('play_count')
 
                 # 抓取视频
                 item.video_url = None
                 item.video_cover_image = None
-                item.duration = None
+                item.video_duration = None
 
                 if media.get("video_versions"):
                     item.video_url = media['video_versions'][0]['url']
                     item.video_cover_image = media['image_versions2']['candidates'][0]['url']
-                    item.duration = int(media['video_duration'])
+                    item.video_duration = int(media['video_duration'])
 
                 self.post_list.append(item.__dict__)
         return self.post_list

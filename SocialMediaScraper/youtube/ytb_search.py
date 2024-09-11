@@ -248,16 +248,3 @@ class YTBSearch:
             followers = re.findall('"content":\s*"([^"]*?)位订阅者"', response)
 
         return followers[0]
-
-
-if __name__ == '__main__':
-    cookies = {
-        'GPS': '1',
-        'YSC': 'I_Lwl4VKYao',
-        'VISITOR_INFO1_LIVE': 'jBY3a08Xskc',
-        'VISITOR_PRIVACY_METADATA': 'CgJDThIEGgAgPA%3D%3D',
-        'PREF': 'tz=Asia.Shanghai&f4=4000000',
-    }
-
-    YTB = YTBSearch(cookies=cookies)
-    pprint(YTB.youtube_post_search("china"))

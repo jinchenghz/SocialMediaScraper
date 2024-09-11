@@ -74,7 +74,9 @@ class TwPost:
                         post_info.retweet_count = (tweet_results['legacy']['quote_count'] +
                                                    tweet_results['legacy']['retweet_count'])
                         post_info.bookmark_count = tweet_results['legacy']['bookmark_count']
-                        post_info.views_count = tweet_results['views'].get('count')
+                        post_info.views_count = tweet_results['views'].get(
+                            'count') if 'retweeted_status_result' not in tweet_results['legacy'].keys() else \
+                            tweet_results['legacy']['retweeted_status_result']['result']['views'].get('count')
                         try:
                             post_info.type = tweet_results['legacy']['entities']['media'][0]['type']
                         except:
@@ -95,10 +97,9 @@ class TwPost:
                                 video_cover_image_list.append(m.get("media_url_https"))
                                 video_duration_list.append(int(m['video_info'].get('duration_millis') / 1000))
                         post_info.image_list = image_list if image_list else None
-                        post_info.video_url = video_list[0] if video_list else None
-                        post_info.video_cover_image = video_cover_image_list[
-                            0] if video_cover_image_list else None
-                        post_info.video_duration = video_duration_list[0] if video_duration_list else None
+                        post_info.video_url_list = video_list[0] if video_list else None
+                        post_info.video_cover_image_list = video_cover_image_list if video_cover_image_list else None
+                        post_info.video_duration_list = video_duration_list if video_duration_list else None
         print(post_info.__dict__)
         return post_info.__dict__
 
